@@ -1,0 +1,8 @@
+#!/bin/sh
+CERT="/etc/nginx/ssl/server.crt"
+KEY="/etc/nginx/ssl/server.key"
+[ -f "$CERT" ] && [ -f "$KEY" ] && exit 0
+mkdir -p /etc/nginx/ssl
+openssl req -x509 -newkey rsa:2048 -keyout "$KEY" -out "$CERT" \
+    -days 3650 -nodes -subj "/CN=BpiRouter/O=BpiRouter/C=CN" 2>/dev/null
+chmod 600 "$KEY" && chmod 644 "$CERT"
