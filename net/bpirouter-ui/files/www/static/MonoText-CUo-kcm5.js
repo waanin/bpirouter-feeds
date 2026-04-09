@@ -1,0 +1,1 @@
+import{_ as t}from"./_plugin-vue_export-helper-DlAUqK2U.js";import{D as o,l as a,p as s}from"./index-DNEJFYbL.js";const c={class:"mono-text"},n={__name:"MonoText",props:{value:{type:String,default:""}},setup(e){return(r,_)=>(o(),a("code",c,s(e.value),1))}},m=t(n,[["__scopeId","data-v-4757e7ea"]]);export{m as M};

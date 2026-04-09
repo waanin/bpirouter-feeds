@@ -1,3 +1,4 @@
+#!/bin/sh
 # BpiRouter factory defaults
 
 # ── System ──
@@ -12,20 +13,50 @@ uci set network.lan.netmask='255.255.255.0'
 uci commit network
 
 # ── WiFi ──
-# Enable 2.4GHz and 5GHz, SSID uses brand name + last four digits of MAC
+# Extract the last four digits of the MAC address as SSID suffix
 MAC_SUFFIX=$(cat /sys/class/net/eth0/address 2>/dev/null | awk -F: '{print toupper($5$6)}')
 [ -z "$MAC_SUFFIX" ] && MAC_SUFFIX="0000"
 
+# --- Global low-level unlocking ---
+# Remove country code restrictions, unlock full frequency band transmission power
+uci set wireless.radio0.country='US'
+uci set wireless.radio1.country='US'
+uci set wireless.radio2.country='US'
+
+# Remove disabled state
 uci set wireless.radio0.disabled='0'
 uci set wireless.radio1.disabled='0'
-uci set wireless.default_radio0.ssid="BpiRouter_${MAC_SUFFIX}"
-uci set wireless.default_radio1.ssid="BpiRouter_5G_${MAC_SUFFIX}"
-uci set wireless.default_radio0.encryption='psk2'
-uci set wireless.default_radio1.encryption='psk2'
+uci set wireless.radio2.disabled='0'
+
+# 6GHz exclusive hardware unlocking (bypass NO-IR restrictions)
+uci set wireless.radio2.channel='37'             # Never use auto, fixed to PSC channel
+uci set wireless.radio2.indoor='1'               # Declare as indoor device
+uci set wireless.radio2.he_6ghz_reg_pwr_type='1' # Declare LPI (Low Power Indoor) compliance
+
+# --- 2.4GHz logical interface configuration ---
+uci set wireless.default_radio0.disabled='0'
+uci set wireless.default_radio0.ssid="BpiRouter_2.4G_${MAC_SUFFIX}"
+uci set wireless.default_radio0.encryption='sae-mixed' # WPA2/WPA3 mixed transition mode
 uci set wireless.default_radio0.key='bpirouter'
+uci set wireless.default_radio0.ieee80211w='1'         # MFP set to 1 (optional) in mixed mode, compatible with old devices
+
+# --- 5GHz logical interface configuration ---
+uci set wireless.default_radio1.disabled='0'
+uci set wireless.default_radio1.ssid="BpiRouter_5G_${MAC_SUFFIX}"
+uci set wireless.default_radio1.encryption='sae-mixed' # WPA2/WPA3 mixed transition mode
 uci set wireless.default_radio1.key='bpirouter'
+uci set wireless.default_radio1.ieee80211w='1'
+
+# --- 6GHz logical interface configuration ---
+uci set wireless.default_radio2.disabled='0'
+uci set wireless.default_radio2.ssid="BpiRouter_6G_${MAC_SUFFIX}"
+uci set wireless.default_radio2.encryption='sae'       # 6G strictly prohibits mixed, must be pure sae
+uci set wireless.default_radio2.key='bpirouter'
+uci set wireless.default_radio2.ieee80211w='2'         # MFP must be set to 2 (mandatory) in pure WPA3
+
 uci commit wireless
 
+# ── Replace Banner ──
 if [ -f /etc/banner.bpirouter ]; then
     mv /etc/banner.bpirouter /etc/banner
 fi

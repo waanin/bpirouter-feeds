@@ -9,6 +9,14 @@ location /rpc {
 location /health {
     proxy_pass http://127.0.0.1:8080/health;
 }
+location /api/ {
+    proxy_pass http://127.0.0.1:8080/api/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_read_timeout 120s;
+    proxy_send_timeout 120s;
+    client_max_body_size 64m;
+}
 location /cgi-bin/luci {
     proxy_pass http://127.0.0.1:8081;
     proxy_set_header Host $host;
